@@ -15,13 +15,15 @@ def parse_arguments():
                         help='File of participants for Secret Santa. One per line.')
     parser.add_argument('--exclude', type=str,
                         help='Comma separated file of excluded pairings. One pairing per line.')
+    parser.add_argument('--csv', action='store_true',
+                        help='Output in CSV format.')
     return parser.parse_args()
 
 
 # read participants from file
 def read_participants(file_path):
     with open(file_path, 'r') as f:
-        participants = [line.strip().lower() for line in f if line.strip()]
+        participants = [line.strip().title() for line in f if line.strip()]
         # ignore header line if present
         if participants and participants[0].startswith('#'):
             participants = participants[1:]
@@ -36,7 +38,7 @@ def read_exclusions(file_path):
             if line.startswith('#'):
                 continue  # skip header line
             else:
-                pair = tuple([person.strip().lower() for person in line.split(",")])
+                pair = tuple([person.strip().title() for person in line.split(",")])
             if pair:
                 exclusions.add(pair)
     return exclusions
@@ -76,6 +78,13 @@ def assign_secret_santa(participants, exclusions):
     raise Exception("Failed to assign Secret Santa pairs without conflicts after multiple attempts.")
 
 
+def write_csv(pairs, output_file):
+    with open(output_file, 'w') as f:
+        f.write("Giver,Receiver\n")
+        for giver, receiver in pairs.items():
+            f.write(f"{giver},{receiver}\n")
+
+
 def main():
     args = parse_arguments()
     participants = read_participants(args.participants)
@@ -87,6 +96,10 @@ def main():
             print(f"{giver} -> {receiver}")
     except Exception as e:
         print(f"Error: {e}")
+
+    if args.csv:
+        write_csv(pairs, 'secret_santa_pairs.csv')
+        print("Pairs written to secret_santa_pairs.csv")
     
 
 if __name__ == "__main__":
